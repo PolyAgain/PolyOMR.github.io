@@ -11,8 +11,7 @@
             background-color: black;
             color: white;
             display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
+            gap: 40px; /* Added more space between sections */
         }
         h1 {
             width: 100%;
@@ -26,12 +25,15 @@
             color: white;
         }
         textarea, input[type="text"], input[type="number"] {
-            width: 100%;
+            width: 80%; /* Narrower input fields */
             margin-bottom: 10px;
             padding: 10px;
             background-color: white;
             color: black;
             border: 1px solid #ccc;
+        }
+        textarea {
+            height: 150px; /* Longer input fields for Your Answers and Answer Key */
         }
         input[type="number"] {
             -moz-appearance: textfield;

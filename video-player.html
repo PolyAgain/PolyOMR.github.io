@@ -16,7 +16,7 @@
             margin-bottom: 20px;
         }
         input[type="text"], input[type="time"] {
-            width: 80%;
+            width: 60%; /* Shorter input field */
             padding: 10px;
             margin-bottom: 20px;
             background-color: white;
@@ -42,13 +42,6 @@
         .controls {
             margin-top: 20px;
         }
-        select {
-            padding: 10px;
-            background-color: white;
-            color: black;
-            border: 1px solid #ccc;
-            margin-bottom: 20px;
-        }
     </style>
 </head>
 <body>
@@ -58,15 +51,12 @@
     <div id="videoContainer"></div>
 
     <div class="controls">
+        <button onclick="skip(-120)">Backward 2m</button>
         <button onclick="skip(-10)">Backward 10s</button>
         <button onclick="skip(10)">Forward 10s</button>
-        <button onclick="skip(-120)">Backward 2m</button>
         <button onclick="skip(120)">Forward 2m</button>
-        <input type="text" id="seekTime" placeholder="Enter time in HH:MM:SS format">
+        <input type="text" id="seekTime" placeholder="Enter time in HH:MM:SS">
         <button onclick="seekToTime()">Jump to Time</button>
-        <select id="audioTrackSelector" style="display: none;">
-            <option value="-1">Select Audio Track</option>
-        </select>
     </div>
 
     <script>
@@ -99,38 +89,6 @@
                     } else {
                         videoElement.pause();
                     }
-                }
-            });
-
-            // Audio track switching
-            const audioTrackSelector = document.getElementById('audioTrackSelector');
-            audioTrackSelector.style.display = 'inline-block';
-
-            videoElement.addEventListener('loadedmetadata', () => {
-                if (videoElement.audioTracks && videoElement.audioTracks.length > 1) {
-                    // Populate the audio track selector
-                    audioTrackSelector.innerHTML = '<option value="-1">Select Audio Track</option>';
-                    for (let i = 0; i < videoElement.audioTracks.length; i++) {
-                        const track = videoElement.audioTracks[i];
-                        audioTrackSelector.innerHTML += `<option value="${i}">${track.label || 'Track ' + (i + 1)}</option>`;
-                    }
-
-                    // Enable the first audio track by default
-                    videoElement.audioTracks[0].enabled = true;
-                } else {
-                    audioTrackSelector.style.display = 'none';
-                }
-            });
-
-            audioTrackSelector.addEventListener('change', () => {
-                const selectedTrack = audioTrackSelector.value;
-                if (selectedTrack >= 0) {
-                    // Disable all audio tracks
-                    for (let i = 0; i < videoElement.audioTracks.length; i++) {
-                        videoElement.audioTracks[i].enabled = false;
-                    }
-                    // Enable the selected audio track
-                    videoElement.audioTracks[selectedTrack].enabled = true;
                 }
             });
         }
