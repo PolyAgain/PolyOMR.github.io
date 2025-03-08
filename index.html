@@ -71,28 +71,189 @@
     </form>
 
     <script>
-        document.getElementById('omrForm').addEventListener('submit', async (e) => {
+        // Function to parse answers
+        function parseAnswers(answerText) {
+            const answers = {};
+            answerText.trim().split('\n').forEach(line => {
+                const match = line.match(/(\d+)\.\s*([\d?\-])/);
+                if (match) {
+                    const q = parseInt(match[1]); // Question number
+                    const answer = match[2].trim(); // Answer
+                    // Treat "?", "-", or empty as blank
+                    answers[q] = answer === '?' || answer === '-' || answer === '' ? null : parseInt(answer);
+                }
+            });
+            return answers;
+        }
+
+        // Function to draw a bubble
+        function drawBubble(ctx, x, y, radius, color = 'black', filled = false) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = color;
+            ctx.fillStyle = filled ? color : 'white';
+            ctx.stroke();
+            ctx.fill();
+        }
+
+        // Function to generate the OMR sheet
+        function generateOMRSheet(userAnswers, answerKey, name) {
+            const QUESTIONS_PER_COLUMN = 50; // Number of questions per column
+            const NUM_OPTIONS = 4; // Number of answer options (1-4)
+            const MARGIN = 50;
+            const BUBBLE_RADIUS = 10;
+            const BUBBLE_SPACING = 30;
+            const QUESTION_SPACING = 40;
+            const FONT_SIZE = 15;
+
+            // Calculate the number of columns needed
+            const numQuestions = Math.max(...Object.keys(userAnswers).map(Number), ...(answerKey ? Object.keys(answerKey).map(Number) : [0]));
+            const NUM_COLUMNS = Math.ceil(numQuestions / QUESTIONS_PER_COLUMN);
+
+            // Calculate sheet width and height
+            const SHEET_WIDTH = MARGIN * 2 + NUM_COLUMNS * (200 + BUBBLE_SPACING * NUM_OPTIONS) + 300; // Extra space for stats column
+            const SHEET_HEIGHT = MARGIN * 2 + QUESTIONS_PER_COLUMN * QUESTION_SPACING;
+
+            // Create a canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = SHEET_WIDTH;
+            canvas.height = SHEET_HEIGHT;
+            const ctx = canvas.getContext('2d');
+
+            // Set background to white
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, SHEET_WIDTH, SHEET_HEIGHT);
+
+            let y = MARGIN;
+            let column = 0; // Track the current column
+            ctx.font = `${FONT_SIZE}px Arial`;
+
+            // Counters for green, red, and yellow circles
+            let greenCount = 0;
+            let redCount = 0;
+            let yellowCount = 0;
+
+            // Find the maximum question number
+            const maxQuestion = Math.max(...Object.keys(userAnswers).map(Number), ...(answerKey ? Object.keys(answerKey).map(Number) : [0]));
+
+            for (let q = 1; q <= maxQuestion; q++) {
+                // Calculate the x position based on the current column
+                const xOffset = MARGIN + column * (SHEET_WIDTH / (NUM_COLUMNS + 1)); // Divide the sheet into columns (+1 for stats column)
+
+                // Draw formatted question number
+                ctx.fillStyle = 'black';
+                ctx.fillText(`Q${q.toString().padStart(3, '0')}`, xOffset, y);
+
+                // Draw bubbles for options (without numbers)
+                let x = xOffset + 100;
+                for (let option = 1; option <= NUM_OPTIONS; option++) {
+                    const userAnswer = userAnswers[q] !== undefined ? userAnswers[q] : null; // Treat missing questions as blank
+                    const correctAnswer = answerKey ? answerKey[q] : null;
+
+                    let color = 'black'; // Default color
+                    let filled = false;
+
+                    if (answerKey && correctAnswer !== undefined) {
+                        // If answer key is provided and has an answer for this question, use color-coding logic
+                        if (userAnswer === option) {
+                            if (userAnswer === correctAnswer) {
+                                color = 'green'; // Correct answer
+                                greenCount++;
+                            } else {
+                                color = 'red'; // Incorrect answer
+                                redCount++;
+                            }
+                            filled = true;
+                        } else if (correctAnswer === option && userAnswer === null) {
+                            color = 'yellow'; // Blank answer (highlight correct answer)
+                            yellowCount++;
+                            filled = true;
+                        }
+                    } else {
+                        // If no answer key is provided or no answer for this question, use default behavior
+                        if (userAnswer === option) {
+                            filled = true;
+                        }
+                    }
+
+                    drawBubble(ctx, x, y, BUBBLE_RADIUS, color, filled);
+                    x += BUBBLE_SPACING;
+                }
+
+                // Move to the next row
+                y += QUESTION_SPACING;
+
+                // Start a new column after every QUESTIONS_PER_COLUMN questions
+                if (q % QUESTIONS_PER_COLUMN === 0) {
+                    y = MARGIN; // Reset y position for the new column
+                    column++; // Move to the next column
+                }
+            }
+
+            // Draw the stats column
+            const statsX = MARGIN + NUM_COLUMNS * (SHEET_WIDTH / (NUM_COLUMNS + 1)); // Position for the stats column
+            const statsY = MARGIN;
+            const statsSpacing = 30;
+
+            // Draw a larger border around the stats region
+            const statsWidth = 250; // Increased width for the stats column
+            const statsHeight = 180; // Increased height for the stats region
+            ctx.strokeStyle = 'black';
+            ctx.strokeRect(statsX - 20, statsY - 20, statsWidth, statsHeight); // Increased padding around the stats
+
+            // Green circle and count
+            drawBubble(ctx, statsX, statsY, BUBBLE_RADIUS, 'green', true);
+            ctx.fillStyle = 'black'; // Set text color to black
+            ctx.fillText(`: ${greenCount}`, statsX + BUBBLE_RADIUS + 5, statsY + 5);
+
+            // Red circle and count
+            drawBubble(ctx, statsX, statsY + statsSpacing, BUBBLE_RADIUS, 'red', true);
+            ctx.fillStyle = 'black'; // Set text color to black
+            ctx.fillText(`: ${redCount}`, statsX + BUBBLE_RADIUS + 5, statsY + statsSpacing + 5);
+
+            // Yellow circle and count
+            drawBubble(ctx, statsX, statsY + 2 * statsSpacing, BUBBLE_RADIUS, 'yellow', true);
+            ctx.fillStyle = 'black'; // Set text color to black
+            ctx.fillText(`: ${yellowCount}`, statsX + BUBBLE_RADIUS + 5, statsY + 2 * statsSpacing + 5);
+
+            // Calculate and display percentage if all questions have an answer key
+            const totalQuestions = maxQuestion;
+            const totalAnswerKey = answerKey ? Object.keys(answerKey).length : 0;
+            if (totalAnswerKey === totalQuestions) {
+                const percentage = ((3 * greenCount - redCount) / (3 * totalQuestions)) * 100;
+                ctx.fillStyle = 'black'; // Set text color to black
+                ctx.fillText(`Percentage: ${percentage.toFixed(2)}%`, statsX, statsY + 3 * statsSpacing);
+            }
+
+            // Display the name below the percentage
+            if (name) {
+                ctx.fillStyle = 'black'; // Set text color to black
+                ctx.fillText(`Name: ${name}`, statsX, statsY + 4 * statsSpacing);
+            }
+
+            return canvas;
+        }
+
+        // Handle form submission
+        document.getElementById('omrForm').addEventListener('submit', (e) => {
             e.preventDefault();
 
             const formData = new FormData(e.target);
-            const response = await fetch('/generate', {
-                method: 'POST',
-                body: new URLSearchParams(formData),
-            });
+            const userAnswers = parseAnswers(formData.get('userAnswers'));
+            const answerKey = parseAnswers(formData.get('answerKey') || '');
+            const name = formData.get('name');
 
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'omr_sheet.png';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            } else {
-                alert('Error generating OMR sheet. Please check your inputs.');
-            }
+            // Generate the OMR sheet
+            const canvas = generateOMRSheet(userAnswers, answerKey, name);
+
+            // Download the OMR sheet as an image
+            const url = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'omr_sheet.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         });
     </script>
 </body>
