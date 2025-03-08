@@ -75,10 +75,11 @@
         function parseAnswers(answerText) {
             const answers = {};
             answerText.trim().split('\n').forEach(line => {
-                const match = line.match(/(\d+)\.\s*([\d?\-])/);
+                // Extract the question number and answer (if present)
+                const match = line.match(/(\d+)\.\s*([\d?\-]*)/); // Allow empty answer part
                 if (match) {
                     const q = parseInt(match[1]); // Question number
-                    const answer = match[2].trim(); // Answer
+                    const answer = match[2].trim(); // Answer (may be empty)
                     // Treat "?", "-", or empty as blank
                     answers[q] = answer === '?' || answer === '-' || answer === '' ? null : parseInt(answer);
                 }
