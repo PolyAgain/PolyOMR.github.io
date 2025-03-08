@@ -10,14 +10,17 @@
             margin: 20px;
             background-color: black;
             color: white;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
         }
         h1 {
+            width: 100%;
             text-align: center;
         }
         .options, .generated-numbers {
-            max-width: 600px;
-            margin: 0 auto;
-            margin-bottom: 20px;
+            flex: 1;
+            min-width: 300px;
         }
         .options label, .generated-numbers label {
             display: block;
@@ -59,7 +62,6 @@
             background-color: #0056b3;
         }
         #generateButton {
-            display: block;
             width: 100%;
             padding: 15px;
             background-color: green;

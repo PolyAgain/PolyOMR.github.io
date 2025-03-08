@@ -14,6 +14,15 @@
         h1 {
             text-align: center;
         }
+        .question-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .question-column {
+            flex: 1;
+            min-width: 200px;
+        }
         .question {
             margin-bottom: 20px;
         }
@@ -55,7 +64,7 @@
 </head>
 <body>
     <h1>OMR Sheet to Text Generator</h1>
-    <div id="questions"></div>
+    <div class="question-container" id="questionContainer"></div>
     <button onclick="addQuestion()">Add Question</button>
     <div class="category">
         <input type="number" id="startRange" placeholder="Start">
@@ -69,6 +78,7 @@
     <script>
         let questions = [];
         let categories = [];
+        let currentQuestion = 1;
 
         function addQuestion() {
             const questionId = questions.length + 1;
@@ -83,8 +93,16 @@
                     <span class="bubble" data-question="${questionId}" data-option="4">4</span>
                 </div>
             `;
-            document.getElementById('questions').appendChild(questionDiv);
+            document.getElementById('questionContainer').appendChild(questionDiv);
             questions.push({ id: questionId, answer: null });
+
+            // Dynamically adjust columns
+            const columns = document.querySelectorAll('.question-column');
+            if (columns.length < 3 && questions.length % 10 === 0) {
+                const newColumn = document.createElement('div');
+                newColumn.className = 'question-column';
+                document.getElementById('questionContainer').appendChild(newColumn);
+            }
         }
 
         function addCategory() {
@@ -120,20 +138,21 @@
         });
 
         document.addEventListener('keydown', (e) => {
-            const key = parseInt(e.key);
-            if (key >= 1 && key <= 4) {
-                const lastQuestion = questions[questions.length - 1];
-                if (lastQuestion) {
-                    lastQuestion.answer = key;
-                    document.querySelectorAll(`.bubble[data-question="${lastQuestion.id}"]`).forEach(bubble => {
-                        bubble.classList.remove('selected');
-                        if (parseInt(bubble.getAttribute('data-option')) === key) {
-                            bubble.classList.add('selected');
-                        }
-                    });
-                }
+            if (e.key === 'ArrowUp' && currentQuestion > 1) {
+                currentQuestion--;
+                focusQuestion(currentQuestion);
+            } else if (e.key === 'ArrowDown' && currentQuestion < questions.length) {
+                currentQuestion++;
+                focusQuestion(currentQuestion);
             }
         });
+
+        function focusQuestion(questionId) {
+            const questionDiv = document.querySelector(`.question:nth-child(${questionId})`);
+            if (questionDiv) {
+                questionDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
 
         // Initialize with one question
         addQuestion();

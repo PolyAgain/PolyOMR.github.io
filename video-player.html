@@ -29,6 +29,7 @@
             color: white;
             border: none;
             cursor: pointer;
+            margin: 5px;
         }
         button:hover {
             background-color: #0056b3;
@@ -45,15 +46,28 @@
     <input type="text" id="videoUrl" placeholder="Enter video URL (e.g., https://www.youtube.com/embed/...)">
     <button onclick="playVideo()">Play Video</button>
     <div id="videoContainer"></div>
+    <button onclick="skip(-10)">Backward 10s</button>
+    <button onclick="skip(10)">Forward 10s</button>
+    <button onclick="skip(-120)">Backward 2m</button>
+    <button onclick="skip(120)">Forward 2m</button>
 
     <script>
+        let videoElement;
+
         function playVideo() {
             const url = document.getElementById('videoUrl').value;
             if (url) {
                 const videoContainer = document.getElementById('videoContainer');
-                videoContainer.innerHTML = `<video controls><source src="${url}" type="video/mp4">Your browser does not support the video tag.</video>`;
+                videoContainer.innerHTML = `<video controls id="videoPlayer"><source src="${url}" type="video/mp4">Your browser does not support the video tag.</video>`;
+                videoElement = document.getElementById('videoPlayer');
             } else {
                 alert('Please enter a valid video URL.');
+            }
+        }
+
+        function skip(seconds) {
+            if (videoElement) {
+                videoElement.currentTime += seconds;
             }
         }
     </script>

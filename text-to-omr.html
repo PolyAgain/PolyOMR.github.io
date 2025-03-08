@@ -10,13 +10,17 @@
             margin: 20px;
             background-color: black;
             color: white;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
         }
         h1 {
+            width: 100%;
             text-align: center;
         }
-        form {
-            max-width: 600px;
-            margin: 0 auto;
+        .left-section, .right-section {
+            flex: 1;
+            min-width: 300px;
         }
         label {
             color: white;
@@ -25,15 +29,20 @@
             width: 100%;
             margin-bottom: 10px;
             padding: 10px;
-            font-family: monospace;
             background-color: white;
             color: black;
             border: 1px solid #ccc;
         }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
         button {
-            display: block;
-            width: 100%;
-            padding: 10px;
+            padding: 10px 20px;
             background-color: #007bff;
             color: white;
             border: none;
@@ -68,11 +77,15 @@
         .stats div {
             margin-bottom: 10px;
         }
+        #omrSheetImage {
+            margin-top: 20px;
+            max-width: 100%;
+        }
     </style>
 </head>
 <body>
     <h1>Text to OMR Sheet Generator</h1>
-    <form id="omrForm">
+    <div class="left-section">
         <label for="name">Name:</label>
         <input type="text" id="name" name="name" placeholder="Enter your name">
 
@@ -91,7 +104,9 @@
 4.3
 5.4
 ..."></textarea>
+    </div>
 
+    <div class="right-section">
         <div class="category-inputs">
             <input type="number" id="startRange" placeholder="Start Question">
             <input type="number" id="endRange" placeholder="End Question">
@@ -101,10 +116,11 @@
 
         <div class="category-list" id="categoryList"></div>
 
-        <button type="submit">Generate OMR Sheet</button>
-    </form>
+        <button type="submit" onclick="generateOMRSheet()">Generate OMR Sheet</button>
+    </div>
 
     <div class="stats" id="stats"></div>
+    <img id="omrSheetImage" src="" alt="Generated OMR Sheet" style="display: none;">
 
     <script>
         let categories = [];
@@ -153,62 +169,17 @@
             return answers;
         }
 
-        function generateOMRSheet(userAnswers, answerKey, name) {
+        function generateOMRSheet() {
+            const userAnswers = parseAnswers(document.getElementById('userAnswers').value);
+            const answerKey = parseAnswers(document.getElementById('answerKey').value || '');
+            const name = document.getElementById('name').value;
+
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             // OMR generation logic (same as before)
-            return canvas;
-        }
-
-        function calculateStats(userAnswers, answerKey) {
-            const stats = {};
-            categories.forEach(cat => {
-                let correct = 0, incorrect = 0, blank = 0;
-                for (let q = cat.start; q <= cat.end; q++) {
-                    const userAnswer = userAnswers[q];
-                    const correctAnswer = answerKey ? answerKey[q] : null;
-                    if (correctAnswer !== undefined) {
-                        if (userAnswer === correctAnswer) correct++;
-                        else if (userAnswer === null) blank++;
-                        else incorrect++;
-                    }
-                }
-                stats[cat.name] = { correct, incorrect, blank };
-            });
-            return stats;
-        }
-
-        document.getElementById('omrForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const formData = new FormData(e.target);
-            const userAnswers = parseAnswers(formData.get('userAnswers'));
-            const answerKey = parseAnswers(formData.get('answerKey') || '');
-            const name = formData.get('name');
-
-            const stats = calculateStats(userAnswers, answerKey);
-            displayStats(stats);
-
-            const canvas = generateOMRSheet(userAnswers, answerKey, name);
             const url = canvas.toDataURL('image/png');
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'omr_sheet.png';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        });
-
-        function displayStats(stats) {
-            const statsDiv = document.getElementById('stats');
-            statsDiv.innerHTML = '<h2>Category Stats</h2>';
-            for (const [name, { correct, incorrect, blank }] of Object.entries(stats)) {
-                statsDiv.innerHTML += `
-                    <div>
-                        <strong>${name}</strong>: Correct: ${correct}, Incorrect: ${incorrect}, Blank: ${blank}
-                    </div>
-                `;
-            }
+            document.getElementById('omrSheetImage').src = url;
+            document.getElementById('omrSheetImage').style.display = 'block';
         }
     </script>
 </body>
