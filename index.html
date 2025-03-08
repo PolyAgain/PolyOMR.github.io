@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OMR Sheet Generator</title>
-    <link rel="icon" type="image/png" href="logo.PNG">
+    <link rel="icon" type="image/png" href="logo.png">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -112,7 +112,9 @@
 
             // Calculate sheet width and height
             const SHEET_WIDTH = MARGIN * 2 + NUM_COLUMNS * (200 + BUBBLE_SPACING * NUM_OPTIONS) + 300; // Extra space for stats column
-            const SHEET_HEIGHT = MARGIN * 2 + QUESTIONS_PER_COLUMN * QUESTION_SPACING;
+            const STATS_HEIGHT = 180; // Height of the stats area
+            const MIN_SHEET_HEIGHT = STATS_HEIGHT + MARGIN * 2; // Minimum height to fit the stats area
+            const SHEET_HEIGHT = Math.max(MIN_SHEET_HEIGHT, MARGIN * 2 + Math.min(numQuestions, QUESTIONS_PER_COLUMN) * QUESTION_SPACING);
 
             // Create a canvas
             const canvas = document.createElement('canvas');
@@ -140,9 +142,9 @@
                 // Calculate the x position based on the current column
                 const xOffset = MARGIN + column * (SHEET_WIDTH / (NUM_COLUMNS + 1)); // Divide the sheet into columns (+1 for stats column)
 
-                // Draw formatted question number
+                // Draw formatted question number (without "Q")
                 ctx.fillStyle = 'black';
-                ctx.fillText(`Q${q.toString().padStart(3, '0')}`, xOffset, y);
+                ctx.fillText(q.toString().padStart(3, '0'), xOffset, y);
 
                 // Draw bubbles for options (without numbers)
                 let x = xOffset + 100;
@@ -197,9 +199,8 @@
 
             // Draw a larger border around the stats region
             const statsWidth = 250; // Increased width for the stats column
-            const statsHeight = 180; // Increased height for the stats region
             ctx.strokeStyle = 'black';
-            ctx.strokeRect(statsX - 20, statsY - 20, statsWidth, statsHeight); // Increased padding around the stats
+            ctx.strokeRect(statsX - 20, statsY - 20, statsWidth, STATS_HEIGHT); // Increased padding around the stats
 
             // Green circle and count
             drawBubble(ctx, statsX, statsY, BUBBLE_RADIUS, 'green', true);
