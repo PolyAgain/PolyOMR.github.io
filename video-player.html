@@ -15,7 +15,7 @@
         h1 {
             margin-bottom: 20px;
         }
-        input[type="text"] {
+        input[type="text"], input[type="number"] {
             width: 80%;
             padding: 10px;
             margin-bottom: 20px;
@@ -39,6 +39,9 @@
             max-width: 800px;
             margin-top: 20px;
         }
+        .controls {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -46,10 +49,15 @@
     <input type="text" id="videoUrl" placeholder="Enter video URL (e.g., https://www.youtube.com/embed/...)">
     <button onclick="playVideo()">Play Video</button>
     <div id="videoContainer"></div>
-    <button onclick="skip(-10)">Backward 10s</button>
-    <button onclick="skip(10)">Forward 10s</button>
-    <button onclick="skip(-120)">Backward 2m</button>
-    <button onclick="skip(120)">Forward 2m</button>
+
+    <div class="controls">
+        <button onclick="skip(-10)">Backward 10s</button>
+        <button onclick="skip(10)">Forward 10s</button>
+        <button onclick="skip(-120)">Backward 2m</button>
+        <button onclick="skip(120)">Forward 2m</button>
+        <input type="number" id="seekTime" placeholder="Enter time in seconds">
+        <button onclick="seekToTime()">Jump to Time</button>
+    </div>
 
     <script>
         let videoElement;
@@ -58,16 +66,45 @@
             const url = document.getElementById('videoUrl').value;
             if (url) {
                 const videoContainer = document.getElementById('videoContainer');
-                videoContainer.innerHTML = `<video controls id="videoPlayer"><source src="${url}" type="video/mp4">Your browser does not support the video tag.</video>`;
+                videoContainer.innerHTML = `
+                    <video controls id="videoPlayer">
+                        <source src="${url}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                `;
                 videoElement = document.getElementById('videoPlayer');
+                setupVideoControls();
             } else {
                 alert('Please enter a valid video URL.');
             }
         }
 
+        function setupVideoControls() {
+            // Spacebar to pause/unpause
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && videoElement) {
+                    e.preventDefault(); // Prevent default spacebar behavior (scrolling)
+                    if (videoElement.paused) {
+                        videoElement.play();
+                    } else {
+                        videoElement.pause();
+                    }
+                }
+            });
+        }
+
         function skip(seconds) {
             if (videoElement) {
                 videoElement.currentTime += seconds;
+            }
+        }
+
+        function seekToTime() {
+            const time = parseFloat(document.getElementById('seekTime').value);
+            if (videoElement && !isNaN(time)) {
+                videoElement.currentTime = time;
+            } else {
+                alert('Please enter a valid time in seconds.');
             }
         }
     </script>
