@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to OMR Sheet Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: black;
+            color: white;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        label {
+            color: white;
+        }
+        textarea, input[type="text"], input[type="number"] {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            font-family: monospace;
+            background-color: white;
+            color: black;
+            border: 1px solid #ccc;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .category-inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .category-inputs input {
+            flex: 1;
+        }
+        .category-list {
+            margin-bottom: 20px;
+        }
+        .category-item {
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .stats {
+            margin-top: 20px;
+        }
+        .stats h2 {
+            margin-bottom: 10px;
+        }
+        .stats div {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Text to OMR Sheet Generator</h1>
+    <form id="omrForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" placeholder="Enter your name">
+
+        <label for="userAnswers">Your Answers:</label>
+        <textarea id="userAnswers" name="userAnswers" placeholder="1.2
+2.3
+3.?
+4.-
+5.4
+..."></textarea>
+
+        <label for="answerKey">Answer Key (Optional):</label>
+        <textarea id="answerKey" name="answerKey" placeholder="1.2
+2.4
+3.1
+4.3
+5.4
+..."></textarea>
+
+        <div class="category-inputs">
+            <input type="number" id="startRange" placeholder="Start Question">
+            <input type="number" id="endRange" placeholder="End Question">
+            <input type="text" id="categoryName" placeholder="Category Name">
+            <button type="button" onclick="addCategory()">Add</button>
+        </div>
+
+        <div class="category-list" id="categoryList"></div>
+
+        <button type="submit">Generate OMR Sheet</button>
+    </form>
+
+    <div class="stats" id="stats"></div>
+
+    <script>
+        let categories = [];
+
+        function addCategory() {
+            const start = parseInt(document.getElementById('startRange').value);
+            const end = parseInt(document.getElementById('endRange').value);
+            const name = document.getElementById('categoryName').value;
+
+            if (start && end && name) {
+                categories.push({ start, end, name });
+                displayCategories();
+                document.getElementById('startRange').value = '';
+                document.getElementById('endRange').value = '';
+                document.getElementById('categoryName').value = '';
+            } else {
+                alert('Please fill all fields for the category.');
+            }
+        }
+
+        function displayCategories() {
+            const categoryList = document.getElementById('categoryList');
+            categoryList.innerHTML = categories.map((cat, index) => `
+                <div class="category-item">
+                    <strong>${cat.name}</strong>: Questions ${cat.start} to ${cat.end}
+                    <button onclick="removeCategory(${index})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function removeCategory(index) {
+            categories.splice(index, 1);
+            displayCategories();
+        }
+
+        function parseAnswers(answerText) {
+            const answers = {};
+            answerText.trim().split('\n').forEach(line => {
+                const match = line.match(/(\d+)\.\s*([\d?\-]*)/);
+                if (match) {
+                    const q = parseInt(match[1]);
+                    const answer = match[2].trim();
+                    answers[q] = answer === '?' || answer === '-' || answer === '' ? null : parseInt(answer);
+                }
+            });
+            return answers;
+        }
+
+        function generateOMRSheet(userAnswers, answerKey, name) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            // OMR generation logic (same as before)
+            return canvas;
+        }
+
+        function calculateStats(userAnswers, answerKey) {
+            const stats = {};
+            categories.forEach(cat => {
+                let correct = 0, incorrect = 0, blank = 0;
+                for (let q = cat.start; q <= cat.end; q++) {
+                    const userAnswer = userAnswers[q];
+                    const correctAnswer = answerKey ? answerKey[q] : null;
+                    if (correctAnswer !== undefined) {
+                        if (userAnswer === correctAnswer) correct++;
+                        else if (userAnswer === null) blank++;
+                        else incorrect++;
+                    }
+                }
+                stats[cat.name] = { correct, incorrect, blank };
+            });
+            return stats;
+        }
+
+        document.getElementById('omrForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const userAnswers = parseAnswers(formData.get('userAnswers'));
+            const answerKey = parseAnswers(formData.get('answerKey') || '');
+            const name = formData.get('name');
+
+            const stats = calculateStats(userAnswers, answerKey);
+            displayStats(stats);
+
+            const canvas = generateOMRSheet(userAnswers, answerKey, name);
+            const url = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'omr_sheet.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+
+        function displayStats(stats) {
+            const statsDiv = document.getElementById('stats');
+            statsDiv.innerHTML = '<h2>Category Stats</h2>';
+            for (const [name, { correct, incorrect, blank }] of Object.entries(stats)) {
+                statsDiv.innerHTML += `
+                    <div>
+                        <strong>${name}</strong>: Correct: ${correct}, Incorrect: ${incorrect}, Blank: ${blank}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

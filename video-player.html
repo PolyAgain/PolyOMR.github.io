@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Video URL Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: black;
+            color: white;
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: white;
+            color: black;
+            border: 1px solid #ccc;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        video {
+            width: 80%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Online Video URL Player</h1>
+    <input type="text" id="videoUrl" placeholder="Enter video URL (e.g., https://www.youtube.com/embed/...)">
+    <button onclick="playVideo()">Play Video</button>
+    <div id="videoContainer"></div>
+
+    <script>
+        function playVideo() {
+            const url = document.getElementById('videoUrl').value;
+            if (url) {
+                const videoContainer = document.getElementById('videoContainer');
+                videoContainer.innerHTML = `<video controls><source src="${url}" type="video/mp4">Your browser does not support the video tag.</video>`;
+            } else {
+                alert('Please enter a valid video URL.');
+            }
+        }
+    </script>
+</body>
+</html>

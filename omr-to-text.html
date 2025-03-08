@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMR Sheet to Text Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: black;
+            color: white;
+        }
+        h1 {
+            text-align: center;
+        }
+        .question {
+            margin-bottom: 20px;
+        }
+        .question label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        .bubble {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 2px solid white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .bubble.selected {
+            background-color: #007bff;
+        }
+        .category {
+            margin-bottom: 20px;
+        }
+        .category input {
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>OMR Sheet to Text Generator</h1>
+    <div id="questions"></div>
+    <button onclick="addQuestion()">Add Question</button>
+    <div class="category">
+        <input type="number" id="startRange" placeholder="Start">
+        <input type="number" id="endRange" placeholder="End">
+        <input type="text" id="categoryName" placeholder="Category Name">
+        <button onclick="addCategory()">Add Category</button>
+    </div>
+    <button onclick="generateText()">Generate Text</button>
+    <div id="output"></div>
+
+    <script>
+        let questions = [];
+        let categories = [];
+
+        function addQuestion() {
+            const questionId = questions.length + 1;
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question';
+            questionDiv.innerHTML = `
+                <label>Question ${questionId}:</label>
+                <div>
+                    <span class="bubble" data-question="${questionId}" data-option="1">1</span>
+                    <span class="bubble" data-question="${questionId}" data-option="2">2</span>
+                    <span class="bubble" data-question="${questionId}" data-option="3">3</span>
+                    <span class="bubble" data-question="${questionId}" data-option="4">4</span>
+                </div>
+            `;
+            document.getElementById('questions').appendChild(questionDiv);
+            questions.push({ id: questionId, answer: null });
+        }
+
+        function addCategory() {
+            const start = parseInt(document.getElementById('startRange').value);
+            const end = parseInt(document.getElementById('endRange').value);
+            const name = document.getElementById('categoryName').value;
+            if (start && end && name) {
+                categories.push({ start, end, name });
+                alert(`Category "${name}" added for questions ${start} to ${end}.`);
+            } else {
+                alert('Please fill all fields for the category.');
+            }
+        }
+
+        function generateText() {
+            let output = '';
+            questions.forEach(q => {
+                output += `${q.id}.${q.answer || '?'}\n`;
+            });
+            document.getElementById('output').innerText = output;
+        }
+
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('bubble')) {
+                const questionId = parseInt(e.target.getAttribute('data-question'));
+                const option = parseInt(e.target.getAttribute('data-option'));
+                questions.find(q => q.id === questionId).answer = option;
+                document.querySelectorAll(`.bubble[data-question="${questionId}"]`).forEach(bubble => {
+                    bubble.classList.remove('selected');
+                });
+                e.target.classList.add('selected');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const key = parseInt(e.key);
+            if (key >= 1 && key <= 4) {
+                const lastQuestion = questions[questions.length - 1];
+                if (lastQuestion) {
+                    lastQuestion.answer = key;
+                    document.querySelectorAll(`.bubble[data-question="${lastQuestion.id}"]`).forEach(bubble => {
+                        bubble.classList.remove('selected');
+                        if (parseInt(bubble.getAttribute('data-option')) === key) {
+                            bubble.classList.add('selected');
+                        }
+                    });
+                }
+            }
+        });
+
+        // Initialize with one question
+        addQuestion();
+    </script>
+</body>
+</html>

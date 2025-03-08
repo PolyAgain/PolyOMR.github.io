@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number List Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: black;
+            color: white;
+        }
+        h1 {
+            text-align: center;
+        }
+        .options, .generated-numbers {
+            max-width: 600px;
+            margin: 0 auto;
+            margin-bottom: 20px;
+        }
+        .options label, .generated-numbers label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        .options input[type="number"], .options input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: white;
+            color: black;
+            border: 1px solid #ccc;
+        }
+        .options input[type="checkbox"], .options input[type="radio"] {
+            margin-right: 10px;
+        }
+        .options .text-input {
+            display: none;
+            margin-top: 10px;
+        }
+        .generated-numbers textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            background-color: white;
+            color: black;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        .generated-numbers button {
+            margin-right: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .generated-numbers button:hover {
+            background-color: #0056b3;
+        }
+        #generateButton {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+        #generateButton:hover {
+            background-color: darkgreen;
+        }
+    </style>
+</head>
+<body>
+    <h1>Number List Generator</h1>
+    <div class="options">
+        <label for="firstNumber">First Number:</label>
+        <input type="number" id="firstNumber" placeholder="Enter first number">
+
+        <label for="lastNumber">Last Number:</label>
+        <input type="number" id="lastNumber" placeholder="Enter last number">
+
+        <label for="step">Step (difference between consecutive numbers):</label>
+        <input type="number" id="step" placeholder="Enter step" value="1">
+
+        <label>
+            <input type="checkbox" id="addLeadingZeros"> Add Leading Zeros
+        </label>
+
+        <label>
+            <input type="checkbox" id="addTrailingZeros"> Add Trailing Zeros
+        </label>
+
+        <label>
+            <input type="checkbox" id="addTextBefore"> Add Text Before Each Number
+        </label>
+        <div class="text-input" id="textBeforeInput">
+            <input type="text" id="textBefore" placeholder="Enter text to add before each number">
+        </div>
+
+        <label>
+            <input type="checkbox" id="addTextAfter"> Add Text After Each Number
+        </label>
+        <div class="text-input" id="textAfterInput">
+            <input type="text" id="textAfter" placeholder="Enter text to add after each number">
+        </div>
+
+        <label>List Numbers:</label>
+        <label>
+            <input type="radio" name="listFormat" value="oneLine" checked> In One Line
+        </label>
+        <label>
+            <input type="radio" name="listFormat" value="separateLines"> In Separate Lines
+        </label>
+    </div>
+
+    <div class="generated-numbers">
+        <label for="generatedList">Generated Numbers:</label>
+        <textarea id="generatedList" readonly></textarea>
+        <button onclick="clearList()">Clear</button>
+        <button onclick="selectAll()">Select All</button>
+        <button onclick="copyAll()">Copy All</button>
+        <button onclick="downloadText()">Download Text</button>
+        <button onclick="openInNewTab()">Open in New Tab</button>
+    </div>
+
+    <button id="generateButton" onclick="generateList()">Generate</button>
+
+    <script>
+        // Show/hide text input fields based on checkbox selection
+        document.getElementById('addTextBefore').addEventListener('change', function() {
+            document.getElementById('textBeforeInput').style.display = this.checked ? 'block' : 'none';
+        });
+        document.getElementById('addTextAfter').addEventListener('change', function() {
+            document.getElementById('textAfterInput').style.display = this.checked ? 'block' : 'none';
+        });
+
+        function generateList() {
+            const firstNumber = parseInt(document.getElementById('firstNumber').value);
+            const lastNumber = parseInt(document.getElementById('lastNumber').value);
+            const step = parseInt(document.getElementById('step').value);
+            const addLeadingZeros = document.getElementById('addLeadingZeros').checked;
+            const addTrailingZeros = document.getElementById('addTrailingZeros').checked;
+            const addTextBefore = document.getElementById('addTextBefore').checked;
+            const textBefore = document.getElementById('textBefore').value;
+            const addTextAfter = document.getElementById('addTextAfter').checked;
+            const textAfter = document.getElementById('textAfter').value;
+            const listFormat = document.querySelector('input[name="listFormat"]:checked').value;
+
+            let numbers = [];
+            for (let i = firstNumber; i <= lastNumber; i += step) {
+                let number = i.toString();
+                if (addLeadingZeros) {
+                    number = number.padStart(lastNumber.toString().length, '0');
+                }
+                if (addTrailingZeros) {
+                    number = number.padEnd(lastNumber.toString().length, '0');
+                }
+                if (addTextBefore) {
+                    number = textBefore + number;
+                }
+                if (addTextAfter) {
+                    number = number + textAfter;
+                }
+                numbers.push(number);
+            }
+
+            const separator = listFormat === 'oneLine' ? ' ' : '\n';
+            document.getElementById('generatedList').value = numbers.join(separator);
+        }
+
+        function clearList() {
+            document.getElementById('generatedList').value = '';
+        }
+
+        function selectAll() {
+            document.getElementById('generatedList').select();
+        }
+
+        function copyAll() {
+            document.getElementById('generatedList').select();
+            document.execCommand('copy');
+        }
+
+        function downloadText() {
+            const text = document.getElementById('generatedList').value;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'number-list.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function openInNewTab() {
+            const text = document.getElementById('generatedList').value;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>
