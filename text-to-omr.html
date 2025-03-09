@@ -10,21 +10,32 @@
             margin: 20px;
             background-color: black;
             color: white;
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
         }
         h1 {
+            width: 100%;
+            text-align: center;
             margin-bottom: 20px;
         }
-        form {
-            max-width: 600px;
-            margin: 0 auto;
+        .container {
+            display: flex;
+            gap: 40px;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .left-section, .right-section {
+            flex: 1;
+            min-width: 300px;
         }
         label {
             color: white;
         }
-        textarea, input[type="text"] {
-            width: 100%; /* Slightly wider input fields */
-            margin-bottom: 20px;
+        textarea, input[type="text"], input[type="number"] {
+            width: 90%; /* Slightly wider input fields */
+            margin-bottom: 10px;
             padding: 10px;
             background-color: white;
             color: black;
@@ -33,10 +44,16 @@
         textarea {
             height: 150px; /* Longer input fields for Your Answers and Answer Key */
         }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
         button {
-            display: block;
-            width: 100%;
-            padding: 10px;
+            padding: 10px 20px;
             background-color: #007bff;
             color: white;
             border: none;
@@ -45,34 +62,97 @@
         button:hover {
             background-color: #0056b3;
         }
+        .category-inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .category-inputs input {
+            flex: 1;
+        }
+        .category-list {
+            margin-bottom: 20px;
+        }
+        .category-item {
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
     <h1>Text to OMR Sheet Generator</h1>
-    <form id="omrForm">
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" placeholder="Enter your name">
+    <div class="container">
+        <div class="left-section">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" placeholder="Enter your name">
 
-        <label for="userAnswers">Your Answers:</label>
-        <textarea id="userAnswers" name="userAnswers" placeholder="1.2
+            <label for="userAnswers">Your Answers:</label>
+            <textarea id="userAnswers" name="userAnswers" placeholder="1.2
 2.3
 3.?
 4.-
 5.4
 ..."></textarea>
 
-        <label for="answerKey">Answer Key (Optional):</label>
-        <textarea id="answerKey" name="answerKey" placeholder="1.2
+            <label for="answerKey">Answer Key (Optional):</label>
+            <textarea id="answerKey" name="answerKey" placeholder="1.2
 2.4
 3.1
 4.3
 5.4
 ..."></textarea>
+        </div>
 
-        <button type="submit">Generate OMR Sheet</button>
-    </form>
+        <div class="right-section">
+            <div class="category-inputs">
+                <input type="number" id="startRange" placeholder="Start Question">
+                <input type="number" id="endRange" placeholder="End Question">
+                <input type="text" id="categoryName" placeholder="Category Name">
+                <button type="button" onclick="addCategory()">Add</button>
+            </div>
+
+            <div class="category-list" id="categoryList"></div>
+
+            <button type="submit" onclick="generateOMRSheet()">Generate OMR Sheet</button>
+        </div>
+    </div>
 
     <script>
+        let categories = [];
+
+        function addCategory() {
+            const start = parseInt(document.getElementById('startRange').value);
+            const end = parseInt(document.getElementById('endRange').value);
+            const name = document.getElementById('categoryName').value;
+
+            if (start && end && name) {
+                categories.push({ start, end, name });
+                displayCategories();
+                document.getElementById('startRange').value = '';
+                document.getElementById('endRange').value = '';
+                document.getElementById('categoryName').value = '';
+            } else {
+                alert('Please fill all fields for the category.');
+            }
+        }
+
+        function displayCategories() {
+            const categoryList = document.getElementById('categoryList');
+            categoryList.innerHTML = categories.map((cat, index) => `
+                <div class="category-item">
+                    <strong>${cat.name}</strong>: Questions ${cat.start} to ${cat.end}
+                    <button onclick="removeCategory(${index})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function removeCategory(index) {
+            categories.splice(index, 1);
+            displayCategories();
+        }
+
         function parseAnswers(answerText) {
             const answers = {};
             answerText.trim().split('\n').forEach(line => {
@@ -86,32 +166,24 @@
             return answers;
         }
 
-        function generateOMRSheet(userAnswers, answerKey, name) {
+        function generateOMRSheet() {
+            const userAnswers = parseAnswers(document.getElementById('userAnswers').value);
+            const answerKey = parseAnswers(document.getElementById('answerKey').value || '');
+            const name = document.getElementById('name').value;
+
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             // OMR generation logic (same as before)
-            return canvas;
-        }
-
-        document.getElementById('omrForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const formData = new FormData(e.target);
-            const userAnswers = parseAnswers(formData.get('userAnswers'));
-            const answerKey = parseAnswers(formData.get('answerKey') || '');
-            const name = formData.get('name');
-
-            const canvas = generateOMRSheet(userAnswers, answerKey, name);
+            const url = canvas.toDataURL('image/png');
 
             // Download the OMR sheet as an image
-            const url = canvas.toDataURL('image/png');
             const a = document.createElement('a');
             a.href = url;
             a.download = 'omr_sheet.png';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-        });
+        }
     </script>
 </body>
 </html>
